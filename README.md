@@ -64,36 +64,6 @@ This server provides the following tools to the MCP client:
   npm start
   ```
 
-## Integration with MCP Clients
-
-### Claude Desktop
-
-To use this server with Claude Desktop, add it to your `claude_desktop_config.json` configuration file:
-
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-
-Add the server configuration under the `mcpServers` object:
-
-```json
-{
-  "mcpServers": {
-    "redmine-mcp": {
-      "command": "node",
-      "args": [
-        "c:/Users/NETCOM/Documents/Knowledge/redmine-mcp/dist/server.js"
-      ],
-      "env": {
-        "REDMINE_URL": "http://agilescrummodel.com:3000",
-        "REDMINE_API_KEY": "bc770fb837df622f829f2529cf967714e49a9694"
-      }
-    }
-  }
-}
-```
-
-Make sure to run `npm run build` in the server directory before starting Claude Desktop so that `dist/server.js` exists.
-
 ## Technical Details
 
 - **Stdio Transport**: The server communicates via standard input/output.
