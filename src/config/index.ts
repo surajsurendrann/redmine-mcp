@@ -9,6 +9,8 @@ const configSchema = z.object({
   REDMINE_URL: z.string().url('REDMINE_URL must be a valid URL'),
   REDMINE_API_KEY: z.string().min(1, 'REDMINE_API_KEY is required'),
   LOG_LEVEL: z.string().default('info'),
+  TRANSPORT: z.enum(['stdio', 'sse']).default('stdio'),
+  PORT: z.string().default('3000'),
 });
 
 const parsed = configSchema.safeParse(process.env);
@@ -23,4 +25,6 @@ export const config = {
   REDMINE_URL: parsed.success ? parsed.data.REDMINE_URL : (process.env.REDMINE_URL || 'https://redmine.company.com'),
   REDMINE_API_KEY: parsed.success ? parsed.data.REDMINE_API_KEY : (process.env.REDMINE_API_KEY || ''),
   LOG_LEVEL: parsed.success ? parsed.data.LOG_LEVEL : (process.env.LOG_LEVEL || 'info'),
+  TRANSPORT: parsed.success ? parsed.data.TRANSPORT : (process.env.TRANSPORT || 'stdio'),
+  PORT: parsed.success ? parsed.data.PORT : (process.env.PORT || '3000'),
 };

@@ -36,11 +36,15 @@ This server provides the following tools to the MCP client:
    REDMINE_URL=https://your-redmine-domain.com
    REDMINE_API_KEY=your_redmine_api_key_here
    LOG_LEVEL=info
+   TRANSPORT=stdio
+   PORT=3000
    ```
 
    - **`REDMINE_URL`**: The base URL of your Redmine instance (e.g., `https://redmine.yourcompany.com`).
    - **`REDMINE_API_KEY`**: Your personal Redmine API access key (found under the "My Account" page in Redmine).
    - **`LOG_LEVEL`**: The minimum logging severity level (e.g., `info`, `debug`, `warn`, `error`). Defaults to `info`.
+   - **`TRANSPORT`**: The server communication protocol. Options are `stdio` (default) for local stdin/stdout, or `sse` to run the server over HTTP Server-Sent Events.
+   - **`PORT`**: The port to bind to when running in `sse` transport mode. Defaults to `3000`.
 
 ### Development & Testing
 
@@ -63,6 +67,27 @@ This server provides the following tools to the MCP client:
   ```bash
   npm start
   ```
+
+### Running as a Remote SSE Server
+
+If you want to run the server remotely and connect to it over HTTP (Server-Sent Events) rather than using local stdin/stdout:
+
+1. Configure `.env` to use the `sse` transport and define a port:
+   ```env
+   TRANSPORT=sse
+   PORT=3000
+   ```
+
+2. Start the server:
+   ```bash
+   npm start
+   ```
+
+   *(Or run `npm run dev` to run it with tsx watch in development mode)*
+
+3. The server will run on `http://localhost:3000` (or your configured port).
+   - The SSE connection endpoint is: `GET /sse`
+   - The client message endpoint is: `POST /messages`
 
 ## Integration with MCP Clients
 
