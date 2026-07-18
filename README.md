@@ -38,7 +38,7 @@ This server provides the following tools to the MCP client:
    LOG_LEVEL=info
    ```
 
-   - **`REDMINE_URL`**: The base URL of your Redmine instance (e.g., `http://agilescrummodel.com:3000`).
+   - **`REDMINE_URL`**: The base URL of your Redmine instance (e.g., `https://redmine.yourcompany.com`).
    - **`REDMINE_API_KEY`**: Your personal Redmine API access key (found under the "My Account" page in Redmine).
    - **`LOG_LEVEL`**: The minimum logging severity level (e.g., `info`, `debug`, `warn`, `error`). Defaults to `info`.
 
@@ -63,6 +63,36 @@ This server provides the following tools to the MCP client:
   ```bash
   npm start
   ```
+
+## Integration with MCP Clients
+
+### Claude Desktop
+
+To use this server with Claude Desktop, add it to your `claude_desktop_config.json` configuration file:
+
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+Add the server configuration under the `mcpServers` object:
+
+```json
+{
+  "mcpServers": {
+    "redmine-mcp": {
+      "command": "node",
+      "args": [
+        "/path/to/redmine-mcp/dist/server.js"
+      ],
+      "env": {
+        "REDMINE_URL": "https://your-redmine-domain.com",
+        "REDMINE_API_KEY": "your_redmine_api_key_here"
+      }
+    }
+  }
+}
+```
+
+Make sure to run `npm run build` in the server directory before starting Claude Desktop so that `dist/server.js` exists.
 
 ## Technical Details
 
