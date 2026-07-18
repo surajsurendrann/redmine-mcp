@@ -11,41 +11,45 @@ import { logger } from './utils/logger.js';
 import { redmineService } from './services/index.js';
 import { handleToolCall, toolsDefinition } from './tools/index.js';
 
-// Initialize the Model Context Protocol server
-const server = new Server(
-    {
-        name: 'redmine-mcp-server',
-        version: '1.0.0',
-    },
-    {
-        capabilities: {
-            tools: {},
+// Helper function to create and configure a new MCP Server instance
+function createServer() {
+    const server = new Server(
+        {
+            name: 'redmine-mcp-server',
+            version: '1.0.0',
         },
-    }
-);
+        {
+            capabilities: {
+                tools: {},
+            },
+        }
+    );
 
-// Register list tools handler
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-    logger.info('List tools request received');
-    return {
-        tools: toolsDefinition,
-    };
-});
-
-// Register call tool handler
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
-    logger.info({ name, args }, 'Call tool request received');
-    try {
-        return await handleToolCall(name, args || {}, redmineService);
-    } catch (error: any) {
-        logger.error({ error, name }, 'Error executing tool');
+    // Register list tools handler
+    server.setRequestHandler(ListToolsRequestSchema, async () => {
+        logger.info('List tools request received');
         return {
-            isError: true,
-            content: [{ type: 'text', text: error.message || 'Unknown error' }],
+            tools: toolsDefinition,
         };
-    }
-});
+    });
+
+    // Register call tool handler
+    server.setRequestHandler(CallToolRequestSchema, async (request) => {
+        const { name, arguments: args } = request.params;
+        logger.info({ name, args }, 'Call tool request received');
+        try {
+            return await handleToolCall(name, args || {}, redmineService);
+        } catch (error: any) {
+            logger.error({ error, name }, 'Error executing tool');
+            return {
+                isError: true,
+                content: [{ type: 'text', text: error.message || 'Unknown error' }],
+            };
+        }
+    });
+
+    return server;
+}
 
 // Start the server using the configured transport
 async function run() {
@@ -65,17 +69,19 @@ async function run() {
             }
         });
 
-        // Store active SSE transports by sessionId
-        const transports = new Map<string, SSEServerTransport>();
+        // Store active SSE connections and their associated server instances
+        const activeConnections = new Map<string, { transport: SSEServerTransport; server: Server }>();
 
         app.get('/sse', async (req, res) => {
             logger.info('New SSE connection requested');
             const transport = new SSEServerTransport('/messages', res);
-            transports.set(transport.sessionId, transport);
+            const server = createServer();
+
+            activeConnections.set(transport.sessionId, { transport, server });
 
             transport.onclose = () => {
                 logger.info({ sessionId: transport.sessionId }, 'SSE connection closed');
-                transports.delete(transport.sessionId);
+                activeConnections.delete(transport.sessionId);
             };
 
             await server.connect(transport);
@@ -87,12 +93,12 @@ async function run() {
                 res.status(400).send('Missing sessionId');
                 return;
             }
-            const transport = transports.get(sessionId);
-            if (!transport) {
+            const conn = activeConnections.get(sessionId);
+            if (!conn) {
                 res.status(404).send('Session not found or expired');
                 return;
             }
-            await transport.handlePostMessage(req, res, req.body);
+            await conn.transport.handlePostMessage(req, res, req.body);
         });
 
         const port = parseInt(config.PORT, 10);
@@ -100,6 +106,7 @@ async function run() {
             logger.info(`Redmine MCP Server running on SSE at http://localhost:${port}`);
         });
     } else {
+        const server = createServer();
         const transport = new StdioServerTransport();
         await server.connect(transport);
         logger.info('Redmine MCP Server running on stdio');
